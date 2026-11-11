@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Laboratorio de Encuestas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Lexend:wght@400;500;600&family=Patrick+Hand&display=swap">
+<style>
+/* Layout: hoja de cuaderno cuadriculado; teoría en una columna de lectura, generador en un área de trabajo con lista + panel */
+:root {
+  --paper: #FAFCF8;
+  --grid: rgba(40, 140, 105, .12);
+  --card: #FFFFFF;
+  --ink: #1D2840;
+  --muted: #586273;
+  --line: #D5E0D8;
+  --accent: #1B8559;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E3F3EA;
+  --pen: #2D52C4;
+  --hl: #FFE680;
+  --warn: #B4471C;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Lexend", "Segoe UI", system-ui, sans-serif;
+  --font-hand: "Patrick Hand", "Comic Sans MS", "Segoe Print", cursive;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #111815; --grid: rgba(110, 200, 160, .07); --card: #19221E; --ink: #E5ECE7; --muted: #9DABA3;
+    --line: #2C3A33; --accent: #4CC28D; --accent-ink: #0A1A12; --accent-soft: #1E3328; --pen: #93B2FF;
+    --hl: rgba(255, 214, 80, .30); --warn: #FF9A6B; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #111815; --grid: rgba(110, 200, 160, .07); --card: #19221E; --ink: #E5ECE7; --muted: #9DABA3;
+  --line: #2C3A33; --accent: #4CC28D; --accent-ink: #0A1A12; --accent-soft: #1E3328; --pen: #93B2FF;
+  --hl: rgba(255, 214, 80, .30); --warn: #FF9A6B; color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.read { max-width: 780px; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.3rem, 7vw, 3.8rem); font-weight: 800; letter-spacing: -.02em; }
+h2 { font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 800; }
+h3 { font-size: 1.2rem; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--pen); }
+:focus-visible { outline: 3px solid var(--pen); outline-offset: 2px; border-radius: 4px; }
+.hand { font-family: var(--font-hand); color: var(--pen); }
+.mark { background: linear-gradient(transparent 45%, var(--hl) 45%, var(--hl) 92%, transparent 92%); padding: 0 .15em; }
+.eyebrow { font-size: .8rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- Encabezado ---------- */
+header.top { padding-block: 40px 28px; }
+header.top .wrap { display: grid; gap: 18px; }
+.lead { font-size: 1.15rem; max-width: 62ch; }
+.obj { border: 2px dashed var(--line); background: var(--card); border-radius: 14px; padding: 16px 20px; max-width: 760px; display: grid; gap: 6px; }
+.obj .hand { font-size: 1.5rem; line-height: 1; }
+.obj ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.jump { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { font: inherit; font-weight: 600; font-size: .95rem; border-radius: 10px; padding: 10px 16px; border: 2px solid var(--ink); background: var(--card); color: var(--ink); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; line-height: 1.2; }
+.btn:hover { background: var(--accent-soft); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.small { padding: 6px 12px; font-size: .85rem; border-width: 1.5px; }
+.btn.danger { border-color: var(--warn); color: var(--warn); }
+
+/* ---------- Teoría ---------- */
+#teoria { padding-block: 12px 40px; }
+.sec { display: grid; gap: 16px; padding-block: 32px; border-top: 2px solid var(--line); }
+.sec-head { display: flex; align-items: baseline; gap: 12px; }
+.sec-head .n { font-family: var(--font-hand); font-size: 1.6rem; color: var(--pen); min-width: 1.6em; }
+.def { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 18px; display: grid; gap: 6px; }
+.def strong { font-family: var(--font-display); font-size: 1.05rem; }
+.formula { font-family: var(--font-hand); font-size: 1.5rem; color: var(--pen); line-height: 1.2; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.vtype { border-radius: 14px; padding: 18px; display: grid; gap: 8px; border: 2px solid; background: var(--card); }
+.vtype.cuali { border-color: #D9488F; }
+.vtype.cuanti { border-color: #2F6FDB; }
+.vtype h3 { display: flex; gap: 8px; align-items: center; }
+.vtype ul { margin: 0; padding-left: 1.1em; }
+.tip { border-left: 0; background: var(--accent-soft); border-radius: 12px; padding: 12px 16px; }
+.tip b { color: var(--accent); }
+.steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; counter-reset: paso; }
+.steps li { counter-increment: paso; background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: .92rem; line-height: 1.35; }
+.steps li::before { content: counter(paso); display: block; font-family: var(--font-hand); font-size: 1.5rem; color: var(--pen); line-height: 1; margin-bottom: 4px; }
+.rawdata { display: flex; flex-wrap: wrap; gap: 6px; }
+.rawdata span { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; font-size: .88rem; }
+.figure { background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 12px; }
+.figure svg { display: block; width: 100%; height: auto; }
+.bench { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.bench figure { margin: 0; text-align: center; display: grid; gap: 4px; justify-items: center; background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 8px; }
+.bench svg { width: 84px; height: 84px; }
+.bench figcaption { font-size: .85rem; line-height: 1.35; }
+.bench b { font-family: var(--font-display); font-size: 1.2rem; display: block; }
+details.q { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+details.q summary { cursor: pointer; font-weight: 500; }
+details.q summary::marker { color: var(--accent); }
+details.q p { margin-top: 8px; color: var(--pen); font-family: var(--font-hand); font-size: 1.25rem; line-height: 1.3; }
+.parts { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.parts li { display: grid; grid-template-columns: 110px 1fr; gap: 10px; align-items: baseline; }
+.parts li b { font-family: var(--font-hand); font-size: 1.3rem; color: var(--pen); font-weight: 400; }
+@media (max-width: 520px) { .parts li { grid-template-columns: 1fr; gap: 0; } .bench { gap: 8px; } .bench svg { width: 64px; height: 64px; } }
+
+/* ---------- Tablas ---------- */
+.tablewrap { overflow-x: auto; border: 1.5px solid var(--line); border-radius: 12px; background: var(--card); }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; min-width: 560px; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; line-height: 1.3; background: var(--accent-soft); }
+th small { display: block; text-transform: none; letter-spacing: 0; font-size: .8rem; color: var(--ink); }
+td.c, th.c { text-align: center; }
+tbody td:first-child, tfoot td:first-child { white-space: nowrap; }
+tfoot td { font-weight: 600; border-bottom: 0; border-top: 2px solid var(--ink); }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+.frac { white-space: nowrap; }
+.frac .eq { color: var(--muted); }
+.tally { color: var(--ink); vertical-align: middle; margin-right: 3px; }
+.tallies { line-height: 1; max-width: 220px; }
+
+/* ---------- Generador ---------- */
+#generador { padding-block: 36px 64px; border-top: 2px solid var(--line); }
+#generador > .wrap { display: grid; gap: 20px; }
+.gen-head { display: grid; gap: 10px; }
+.gen-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.workspace { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .workspace { grid-template-columns: minmax(0, 1fr); } }
+.lista-box { background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 10px; display: grid; gap: 8px; }
+.lista-box h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 4px 6px 0; font-family: var(--font-body); }
+#lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 520px; overflow-y: auto; }
+@media (max-width: 860px) { #lista { max-height: 260px; } }
+.item { width: 100%; text-align: left; font: inherit; color: var(--ink); background: transparent; border: 1.5px solid transparent; border-radius: 10px; padding: 8px 10px; cursor: pointer; display: grid; gap: 4px; }
+.item:hover { background: var(--accent-soft); }
+.item.on { border-color: var(--accent); background: var(--accent-soft); }
+.item-q { font-weight: 500; line-height: 1.3; font-size: .95rem; }
+.item-meta { font-size: .78rem; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tag { font-size: .7rem; font-weight: 600; border-radius: 999px; padding: 1px 8px; color: #fff; }
+.tag.cualitativa { background: #C23B7E; }
+.tag.cuantitativa { background: #2B63C8; }
+.empty { color: var(--muted); font-size: .9rem; padding: 8px; }
+.panel { display: grid; gap: 20px; min-width: 0; }
+.sheet { background: var(--card); border: 1.5px solid var(--line); border-radius: 16px; padding: 20px; display: grid; gap: 16px; min-width: 0; }
+.sheet > h3 { font-size: 1.05rem; }
+.fields { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+@media (max-width: 620px) { .fields { grid-template-columns: 1fr; } }
+label.lbl, .lbl { font-size: .85rem; font-weight: 600; color: var(--muted); display: grid; gap: 6px; }
+input[type="text"], textarea { font: inherit; color: var(--ink); background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; font-weight: 400; }
+input[type="text"]:focus, textarea:focus { border-color: var(--pen); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--pen) 25%, transparent); }
+textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
+.seg { display: inline-flex; border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; flex-wrap: wrap; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { padding: 8px 14px; cursor: pointer; font-size: .9rem; font-weight: 500; color: var(--ink); }
+.seg input:checked + label { background: var(--ink); color: var(--paper); }
+.seg input:focus-visible + label { outline: 3px solid var(--pen); outline-offset: -3px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; border: 1.5px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--paper); }
+.chip button { font: inherit; font-size: .88rem; border: 0; background: transparent; color: var(--ink); cursor: pointer; padding: 5px 10px; }
+.chip button:hover { background: var(--accent-soft); }
+.chip .chip-del { border-left: 1.5px solid var(--line); padding: 5px 10px; color: var(--muted); }
+.addrow { display: flex; gap: 8px; flex-wrap: wrap; }
+.addrow input { flex: 1 1 200px; width: auto; }
+.hint { font-size: .82rem; color: var(--muted); font-weight: 400; }
+.err { color: var(--warn); font-size: .88rem; font-weight: 500; }
+.danger-zone { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.res-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.res-head h3 { font-size: 1.35rem; }
+.stats { display: flex; flex-wrap: wrap; gap: 10px; }
+.stat { border: 1.5px solid var(--line); border-radius: 12px; padding: 8px 14px; min-width: 110px; background: var(--paper); }
+.stat span { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; }
+.stat b { font-family: var(--font-display); font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.switch { display: inline-flex; gap: 8px; align-items: center; font-size: .9rem; cursor: pointer; }
+.switch input { width: 18px; height: 18px; accent-color: var(--accent); }
+.reveal { font: inherit; font-weight: 600; min-width: 44px; border: 1.5px dashed var(--pen); background: transparent; color: var(--pen); border-radius: 8px; padding: 2px 8px; cursor: pointer; position: relative; }
+.reveal .ans { visibility: hidden; }
+.reveal::before { content: "?"; position: absolute; inset: 0; display: grid; place-items: center; }
+.reveal.shown { border-style: solid; border-color: transparent; color: var(--ink); cursor: default; }
+.reveal.shown .ans { visibility: visible; }
+.reveal.shown::before { content: none; }
+.chartgrid { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 680px) { .chartgrid { grid-template-columns: minmax(0, 1fr); } .chartgrid .pie { max-width: 300px; margin: 0 auto; width: 100%; } }
+.pie svg { display: block; width: 100%; height: auto; }
+.pie-title { font-family: var(--font-display); font-weight: 600; text-align: center; margin-bottom: 8px; line-height: 1.25; }
+.legend { list-style: none; margin: 0; padding: 12px 14px; display: grid; gap: 6px; border: 1.5px solid var(--line); border-radius: 12px; }
+.legend li { display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: center; font-size: .92rem; }
+.legend .sw { margin: 0; width: 14px; height: 14px; }
+.legend-cap { font-family: var(--font-hand); color: var(--pen); font-size: 1.15rem; line-height: 1; }
+.concl { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.note { font-size: .82rem; color: var(--muted); }
+.status { font-size: .85rem; color: var(--accent); font-weight: 500; min-height: 1.2em; }
+
+/* ---------- Celular: la tabla se convierte en tarjetas, una por dato ---------- */
+@media (max-width: 600px) {
+  header.top { padding-block: 28px 20px; }
+  .lead { font-size: 1.05rem; }
+  .sec { padding-block: 26px; }
+  .jump .btn, .gen-actions .btn { flex: 1 1 100%; justify-content: center; }
+  .sheet { padding: 16px 14px; border-radius: 14px; }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat { min-width: 0; }
+  .stat b { overflow-wrap: anywhere; }
+  .chip button { padding: 8px 12px; }
+  .addrow .btn { flex: 1 1 100%; justify-content: center; }
+  .toolbar { align-items: flex-start; }
+  .tablewrap { overflow: visible; border: 0; background: transparent; border-radius: 0; }
+  table.resp { min-width: 0; display: block; }
+  table.resp thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  table.resp tbody { display: grid; gap: 10px; }
+  table.resp tfoot { display: block; margin-top: 10px; }
+  table.resp tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  table.resp tfoot tr { border: 2px solid var(--ink); }
+  table.resp td { display: grid; gap: 2px; align-content: start; padding: 0; border: 0; text-align: left; min-width: 0; }
+  table.resp td::before { content: attr(data-label); font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; line-height: 1.3; }
+  table.resp td:first-child { grid-column: 1 / -1; font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; display: block; }
+  table.resp td:first-child::before { content: none; }
+  table.resp td:empty { display: none; }
+  table.resp .frac { white-space: normal; }
+  table.resp .reveal { justify-self: start; }
+}
+footer { padding-block: 24px 40px; color: var(--muted); font-size: .85rem; border-top: 2px solid var(--line); }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Matemática · 6° básico · Datos y probabilidades</span>
+    <h1>Laboratorio de Encuestas</h1>
+    <p class="lead">Aprende a preguntar, contar y mostrar datos. Primero repasa la teoría. Después crea tus propias encuestas y la página arma sola la <span class="mark">tabla de frecuencias</span> y el <span class="mark">gráfico circular</span>.</p>
+    <div class="obj">
+      <span class="hand">Obj:</span>
+      <ul>
+        <li>Distinguir variables cualitativas y cuantitativas.</li>
+        <li>Construir tablas con frecuencia absoluta, relativa y relativa porcentual.</li>
+        <li>Identificar las partes de un gráfico circular: título, sectores, porcentajes y leyenda.</li>
+        <li>Reconocer el círculo completo como el 100 % y relacionar sectores con el 25 % y el 50 %.</li>
+        <li>Interpretar datos cotidianos y sacar conclusiones comparando sectores.</li>
+      </ul>
+    </div>
+    <nav class="jump" aria-label="Secciones">
+      <a class="btn" href="#teoria">Leer la teoría</a>
+      <a class="btn primary" href="#generador">Ir al generador de encuestas</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section id="teoria">
+  <div class="wrap read">
+
+    <!-- 1 -->
+    <div class="sec">
+      <div class="sec-head"><span class="n">1</span><h2>¿Qué es una encuesta?</h2></div>
+      <p>Una <span class="mark">encuesta</span> es una forma de reunir información haciendo <b>la misma pregunta</b> a un grupo de personas. Por ejemplo: <i>«¿Cuál es tu fruta favorita?»</i> o <i>«¿Cuántos hermanos tienes?»</i>. Cada respuesta que anotamos es un <b>dato</b>.</p>
+      <div class="grid4">
+        <div class="def"><strong>Población</strong><span>Todo el grupo que queremos estudiar. Ej: todos los estudiantes del colegio.</span></div>
+        <div class="def"><strong>Muestra</strong><span>La parte de la población a la que le preguntamos. Ej: los 30 estudiantes del 6° B.</span></div>
+        <div class="def"><strong>Variable</strong><span>La característica que estudiamos. Ej: la fruta favorita.</span></div>
+        <div class="def"><strong>Dato</strong><span>Cada respuesta que obtenemos. Ej: «plátano».</span></div>
+      </div>
+      <h3>Pasos para hacer una encuesta</h3>
+      <ol class="steps">
+        <li>Elegir una pregunta clara.</li>
+        <li>Preguntar y anotar los datos.</li>
+        <li>Ordenar los datos en una tabla.</li>
+        <li>Representarlos en un gráfico.</li>
+        <li>Sacar conclusiones.</li>
+      </ol>
+    </div>
+
+    <!-- 2 -->
+    <div class="sec">
+      <div class="sec-head"><span class="n">2</span><h2>Tipos de variables</h2></div>
+      <p>Según el tipo de respuesta que se obtiene, las variables pueden ser <b>cualitativas</b> o <b>cuantitativas</b>.</p>
+      <div class="grid2">
+        <div class="vtype cuali">
+          <h3><span class="tag cualitativa">Cualitativa</span></h3>
+          <p>Describe una <b>cualidad</b> o característica. Las respuestas son <b>palabras</b>, no números.</p>
+          <ul>
+            <li>Color favorito: azul, rojo, verde…</li>
+            <li>Deporte preferido</li>
+            <li>Medio de transporte para llegar al colegio</li>
+            <li>Mascota que tienes</li>
+          </ul>
+        </div>
+        <div class="vtype cuanti">
+          <h3><span class="tag cuantitativa">Cuantitativa</span></h3>
+          <p>Se responde con un <b>número</b> que se obtiene al <b>contar</b> o <b>medir</b>.</p>
+          <ul>
+            <li>Número de hermanos: 0, 1, 2…</li>
+            <li>Edad en años</li>
+            <li>Estatura en centímetros</li>
+            <li>Horas que duermes en la noche</li>
+          </ul>
+        </div>
+      </div>
+      <p class="tip"><b>Truco:</b> pregúntate «¿la respuesta es un número que cuenta o mide algo?». Si la respuesta es sí, la variable es <b>cuantitativa</b>. Si la respuesta es una palabra, es <b>cualitativa</b>.</p>
+    </div>
+
+    <!-- 3 -->
+    <div class="sec">
+      <div class="sec-head"><span class="n">3</span><h2>La tabla de frecuencias</h2></div>
+      <p>Cuando tenemos muchos datos, los ordenamos en una tabla para entenderlos mejor. Imagina que les preguntamos a los <b>20 estudiantes del 6° B</b>: <i>«¿Cuál es tu fruta favorita?»</i>. Estas fueron sus respuestas:</p>
+      <div class="rawdata" id="raw-ejemplo" aria-label="Datos del ejemplo"></div>
+
+      <div class="def">
+        <strong>Frecuencia absoluta (f)</strong>
+        <span>Es la cantidad de veces que se repite un dato. Se cuenta con <b>marcas de conteo</b> (palotes), agrupadas de 5 en 5. Si sumamos todas las frecuencias absolutas obtenemos el <b>total de datos</b>, que se llama <b>n</b>.</span>
+      </div>
+      <div class="def">
+        <strong>Frecuencia relativa (fr)</strong>
+        <span class="formula">fr = f ÷ n</span>
+        <span>Indica qué parte del total representa cada dato. Se puede escribir como <b>fracción</b> o como <b>número decimal</b>. La suma de todas las frecuencias relativas siempre da <b>1</b>.</span>
+      </div>
+      <div class="def">
+        <strong>Frecuencia relativa porcentual (%)</strong>
+        <span class="formula">% = fr × 100</span>
+        <span>Es la frecuencia relativa expresada como <b>porcentaje</b>. Un porcentaje es una cantidad que representa una parte respecto de un total de 100. La suma de todos los porcentajes siempre da <b>100 %</b>.</span>
+      </div>
+
+      <h3>Así queda la tabla del ejemplo</h3>
+      <div class="tablewrap">
+        <table class="resp">
+          <caption class="sr-only">Fruta favorita de los 20 estudiantes del 6° B</caption>
+          <thead>
+            <tr><th>Dato</th><th>Conteo</th><th class="c">Frecuencia absoluta<small>f</small></th><th>Frecuencia relativa<small>fr = f ÷ n</small></th><th class="c">Frec. relativa porcentual<small>%</small></th></tr>
+          </thead>
+          <tbody id="tabla-ejemplo"></tbody>
+          <tfoot><tr><td>Total</td><td></td><td class="c" data-label="Frec. absoluta (f)">n = 20</td><td data-label="Frec. relativa (fr)">1</td><td class="c" data-label="Frec. rel. porcentual">100 %</td></tr></tfoot>
+        </table>
+      </div>
+      <p class="tip"><b>Cálculo paso a paso para Manzana:</b> 5 ÷ 20 = 0,25 &nbsp;→&nbsp; 0,25 × 100 = 25 %. Es decir, 1 de cada 4 estudiantes prefiere manzana.</p>
+    </div>
+
+    <!-- 4 -->
+    <div class="sec">
+      <div class="sec-head"><span class="n">4</span><h2>El gráfico circular</h2></div>
+      <p>Un <span class="mark">gráfico circular</span> (también llamado <b>de torta</b> o <b>de sectores</b>) es una herramienta visual que sirve para mostrar cómo se divide un total de datos. Estas son sus partes indispensables:</p>
+      <div class="figure" id="anatomia" role="img" aria-label="Gráfico circular de la fruta favorita del 6° B con sus partes señaladas: título, sectores, porcentajes y leyenda. Plátano 50 %, Manzana 25 %, Frutilla 15 %, Uva 10 %."></div>
+      <ul class="parts">
+        <li><b>Título</b><span>Dice de qué trata el gráfico.</span></li>
+        <li><b>Sector</b><span>Parte del círculo que muestra una categoría de datos.</span></li>
+        <li><b>Porcentaje</b><span>Indica qué parte del total (de 100) representa cada sector.</span></li>
+        <li><b>Leyenda</b><span>Cuadro explicativo que asocia cada color o textura a su categoría.</span></li>
+        <li><b>Totalidad</b><span>El círculo completo equivale al 100 % de los datos.</span></li>
+      </ul>
+
+      <h3>Porcentajes que se ven a simple vista</h3>
+      <div class="bench" id="bench"></div>
+      <p class="tip"><b>Dato extra:</b> el círculo completo mide 360°. Para saber cuántos grados tiene un sector, multiplica su porcentaje por 3,6. Ejemplo: 25 × 3,6 = 90°, que es un ángulo recto.</p>
+    </div>
+
+    <!-- 5 -->
+    <div class="sec">
+      <div class="sec-head"><span class="n">5</span><h2>Leer e interpretar un gráfico</h2></div>
+      <p>Para sacar conclusiones, <b>compara el tamaño de los sectores</b>:</p>
+      <ul class="concl">
+        <li>El sector más grande es la respuesta más elegida. Ese dato se llama <b>moda</b>.</li>
+        <li>Si un sector ocupa más de la mitad del círculo, más del 50 % del grupo eligió esa opción.</li>
+        <li>Si un sector forma una esquina recta (90°), representa un cuarto del total: el 25 %.</li>
+        <li>Dos sectores del mismo tamaño tienen la misma frecuencia.</li>
+      </ul>
+      <p>Conclusiones del ejemplo de la fruta favorita:</p>
+      <ul class="concl hand" style="font-size:1.25rem; line-height:1.35">
+        <li>La mitad del curso (50 %) prefiere el plátano.</li>
+        <li>A la cuarta parte del curso (25 %) le gusta más la manzana.</li>
+        <li>El plátano tiene el doble de votos que la manzana.</li>
+        <li>La uva es la fruta menos elegida (10 %).</li>
+      </ul>
+    </div>
+
+    <!-- 6 -->
+    <div class="sec">
+      <div class="sec-head"><span class="n">6</span><h2>Pon a prueba lo aprendido</h2></div>
+      <p class="muted">Piensa tu respuesta y luego haz clic para revisarla.</p>
+      <details class="q"><summary>«¿Cuántas horas ves televisión al día?» ¿Qué tipo de variable es?</summary><p>Cuantitativa: la respuesta es un número que mide tiempo.</p></details>
+      <details class="q"><summary>«¿Cuál es tu instrumento musical favorito?» ¿Qué tipo de variable es?</summary><p>Cualitativa: la respuesta es una palabra (guitarra, flauta, piano…).</p></details>
+      <details class="q"><summary>De 25 estudiantes, 5 eligieron Ciencias. ¿Cuál es su frecuencia relativa y su porcentaje?</summary><p>fr = 5 ÷ 25 = 1/5 = 0,2 → 0,2 × 100 = 20 %</p></details>
+      <details class="q"><summary>Un sector ocupa la mitad del círculo. ¿Qué porcentaje representa?</summary><p>El 50 %, porque el círculo completo es el 100 %.</p></details>
+      <details class="q"><summary>Si sumas todas las frecuencias relativas porcentuales de una tabla, ¿cuánto debe dar?</summary><p>Siempre 100 % (puede dar 99,9 % o 100,1 % solo por redondeo).</p></details>
+    </div>
+  </div>
+</section>
+
+<section id="generador" aria-labelledby="gen-title">
+  <div class="wrap">
+    <div class="gen-head">
+      <span class="eyebrow">Ahora tú</span>
+      <h2 id="gen-title">Generador de encuestas</h2>
+      <p class="lead" style="font-size:1.05rem">Crea una encuesta al azar para practicar o escribe los datos de tu propia encuesta. La tabla de frecuencias y el gráfico circular se actualizan solos.</p>
+    </div>
+    <div class="gen-actions">
+      <button class="btn primary" type="button" id="gen-cuali">+ Encuesta cualitativa al azar</button>
+      <button class="btn primary" type="button" id="gen-cuanti">+ Encuesta cuantitativa al azar</button>
+      <button class="btn" type="button" id="gen-blank">+ Encuesta en blanco</button>
+    </div>
+
+    <div class="workspace">
+      <aside class="lista-box" aria-label="Tus encuestas">
+        <h3>Tus encuestas</h3>
+        <ul id="lista"></ul>
+      </aside>
+
+      <div class="panel" id="panel">
+        <div class="sheet" id="editor">
+          <h3>1. Datos de la encuesta</h3>
+          <div class="fields">
+            <label class="lbl" for="q-titulo">Pregunta de la encuesta
+              <input type="text" id="q-titulo" placeholder="Ej: ¿Cuál es tu deporte favorito?" autocomplete="off">
+            </label>
+            <label class="lbl" for="q-grupo">¿A quiénes encuestaste?
+              <input type="text" id="q-grupo" placeholder="Ej: Estudiantes del 6° B" autocomplete="off">
+            </label>
+          </div>
+          <div class="lbl" id="tipo-lbl">Tipo de variable
+            <div class="seg" role="radiogroup" aria-labelledby="tipo-lbl">
+              <input type="radio" name="tipo" id="tipo-cuali" value="cualitativa"><label for="tipo-cuali">Cualitativa (palabras)</label>
+              <input type="radio" name="tipo" id="tipo-cuanti" value="cuantitativa"><label for="tipo-cuanti">Cuantitativa (números)</label>
+            </div>
+          </div>
+          <div class="lbl">Registrar respuestas una por una
+            <div class="addrow">
+              <input type="text" id="q-nuevo" placeholder="Escribe una respuesta y presiona Agregar" autocomplete="off">
+              <button class="btn small" type="button" id="q-agregar">Agregar</button>
+            </div>
+            <span class="hint">O suma votos con los botones: <b>+1</b> agrega una respuesta, <b>−</b> quita una.</span>
+            <div class="chips" id="chips"></div>
+          </div>
+          <label class="lbl" for="q-datos">Lista de datos
+            <textarea id="q-datos" spellcheck="false" placeholder="Ej: fútbol, básquetbol, fútbol, natación"></textarea>
+            <span class="hint">Separa los datos con comas o con saltos de línea. Si los números tienen decimales, usa punto (ej: 1.45).</span>
+          </label>
+          <p class="err" id="q-error" hidden></p>
+          <div class="danger-zone">
+            <button class="btn small danger" type="button" id="q-borrar">Eliminar encuesta</button>
+            <span id="confirm-box" hidden>¿Seguro? Esta encuesta se borrará.
+              <button class="btn small danger" type="button" id="q-borrar-si">Sí, eliminar</button>
+              <button class="btn small" type="button" id="q-borrar-no">Cancelar</button>
+            </span>
+          </div>
+        </div>
+
+        <div class="sheet" id="resultados">
+          <div class="res-head">
+            <div>
+              <span class="eyebrow">2. Resultados</span>
+              <h3 id="res-titulo"></h3>
+              <p class="muted" id="res-sub"></p>
+            </div>
+          </div>
+          <p class="muted" id="res-vacio" hidden>Todavía no hay datos. Agrega respuestas arriba para ver la tabla y el gráfico.</p>
+          <div id="res-body" class="panel">
+            <div class="stats" id="stats"></div>
+            <div class="toolbar">
+              <label class="switch" for="practica"><input type="checkbox" id="practica"> Modo práctica: ocultar resultados para calcularlos tú</label>
+              <button class="btn small" type="button" id="copiar">Copiar tabla</button>
+              <span class="status" id="status" role="status"></span>
+            </div>
+            <div class="tablewrap">
+              <table id="tabla" class="resp"></table>
+            </div>
+            <p class="note" id="nota-redondeo" hidden>Los decimales y porcentajes están redondeados. Por eso la suma puede dar 99,9 % o 100,1 % en vez de 100 % exacto.</p>
+            <div class="chartgrid">
+              <div class="pie">
+                <div class="pie-title" id="pie-title"></div>
+                <div id="pie"></div>
+              </div>
+              <div class="panel" style="gap:14px">
+                <div>
+                  <div class="legend-cap">Leyenda</div>
+                  <ul class="legend" id="legend"></ul>
+                </div>
+                <div>
+                  <h3 style="font-size:1rem; margin-bottom:6px">Conclusiones</h3>
+                  <ul class="concl" id="concl"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet" id="vacio" hidden>
+        <p>No hay ninguna encuesta seleccionada. Crea una con los botones de arriba.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">Laboratorio de Encuestas · Matemática 6° básico. Tus encuestas se guardan solo en este navegador.</div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var PAL = [
+    { c: "#2F6FDB", ink: "#FFFFFF" }, { c: "#E8664A", ink: "#FFFFFF" }, { c: "#F2B632", ink: "#2A2100" },
+    { c: "#2E9E6E", ink: "#FFFFFF" }, { c: "#8B5CF6", ink: "#FFFFFF" }, { c: "#D9488F", ink: "#FFFFFF" },
+    { c: "#1FA2B8", ink: "#FFFFFF" }, { c: "#9A7452", ink: "#FFFFFF" }, { c: "#86B83C", ink: "#1D2A00" },
+    { c: "#5B6B8C", ink: "#FFFFFF" }
+  ];
+  var STORE = "lab-encuestas-v1";
+  var CURSOS = ["6° A", "6° B", "6° C", "6° D"];
+  var BANK = {
+    cualitativa: [
+      { q: "¿Cuál es tu fruta favorita?", ops: ["Manzana", "Plátano", "Frutilla", "Naranja", "Uva", "Sandía"] },
+      { q: "¿Qué deporte prefieres?", ops: ["Fútbol", "Básquetbol", "Vóleibol", "Natación", "Atletismo"] },
+      { q: "¿Cómo llegas al colegio?", ops: ["Caminando", "Auto", "Micro", "Bicicleta", "Furgón escolar"] },
+      { q: "¿Cuál es tu asignatura favorita?", ops: ["Matemática", "Lenguaje", "Ciencias", "Historia", "Ed. Física", "Artes", "Música"] },
+      { q: "¿Qué mascota te gustaría tener?", ops: ["Perro", "Gato", "Pez", "Hámster", "Conejo", "Ave"] },
+      { q: "¿Cuál es tu color favorito?", ops: ["Azul", "Rojo", "Verde", "Morado", "Negro", "Amarillo"] },
+      { q: "¿Qué comida prefieres?", ops: ["Completo", "Empanada", "Pizza", "Cazuela", "Pastel de choclo"] },
+      { q: "¿Qué estación del año te gusta más?", ops: ["Verano", "Otoño", "Invierno", "Primavera"] },
+      { q: "¿Qué haces en el recreo?", ops: ["Jugar fútbol", "Conversar", "Comer colación", "Ir a la biblioteca", "Saltar la cuerda"] }
+    ],
+    cuantitativa: [
+      { q: "¿Cuántos hermanos tienes?", min: 0, max: 4, center: 1 },
+      { q: "¿Cuántas mascotas hay en tu casa?", min: 0, max: 4, center: 1 },
+      { q: "¿Cuántos libros leíste este mes?", min: 0, max: 5, center: 2 },
+      { q: "¿Cuántas horas duermes en la noche?", min: 7, max: 11, center: 9 },
+      { q: "¿Qué número de calzado usas?", min: 33, max: 38, center: 35.5 },
+      { q: "¿Cuántas personas viven en tu casa?", min: 2, max: 7, center: 4 },
+      { q: "¿Cuántos años tienes?", min: 10, max: 13, center: 11.5 },
+      { q: "¿Cuántas veces a la semana haces deporte?", min: 0, max: 5, center: 2 }
+    ]
+  };
+
+  var state = { surveys: [], sel: null, practica: false };
+
+  function $(s) { return document.querySelector(s); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function nf(x, min, max) { return x.toLocaleString("es-CL", { minimumFractionDigits: min, maximumFractionDigits: max }); }
+  function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+  function norm(s) { return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim(); }
+  function cap(s) { s = String(s).trim(); return s.charAt(0).toUpperCase() + s.slice(1); }
+  function uid() { return "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function expand(pairs) { var out = []; pairs.forEach(function (p) { for (var i = 0; i < p[1]; i++) out.push(String(p[0])); }); return shuffle(out); }
+  function sampleW(items, w, n) {
+    var tot = w.reduce(function (a, b) { return a + b; }, 0), out = [];
+    for (var i = 0; i < n; i++) {
+      var r = Math.random() * tot, k = 0;
+      while (k < items.length - 1 && r > w[k]) { r -= w[k]; k++; }
+      out.push(String(items[k]));
+    }
+    return out;
+  }
+  function parseDatos(text) { return text.split(/[,;\n]+/).map(function (s) { return s.trim(); }).filter(Boolean); }
+  function fmtPct(p) { return nf(p, 0, 1) + " %"; }
+  function isExact(x, dec) { var m = Math.pow(10, dec); return Math.abs(x * m - Math.round(x * m)) < 1e-9; }
+
+  /* ---------- Cálculos ---------- */
+  function keyOf(s, raw) {
+    if (s.tipo === "cuantitativa") { var v = Number(raw); return isFinite(v) && raw !== "" ? { key: String(v), label: nf(v, 0, 2), num: v } : null; }
+    return { key: norm(raw), label: cap(raw), num: null };
+  }
+  function calc(s) {
+    var groups = {}, order = [], invalid = [];
+    s.datos.forEach(function (raw) {
+      var k = keyOf(s, raw);
+      if (!k) { invalid.push(raw); return; }
+      if (!groups[k.key]) { groups[k.key] = { key: k.key, label: k.label, num: k.num, raw: raw, f: 0 }; order.push(k.key); }
+      groups[k.key].f++;
+    });
+    var rows = order.map(function (k) { return groups[k]; });
+    if (s.tipo === "cuantitativa") rows.sort(function (a, b) { return a.num - b.num; });
+    else rows.sort(function (a, b) { return b.f - a.f; });
+    var n = rows.reduce(function (a, r) { return a + r.f; }, 0);
+    rows.forEach(function (r, i) { r.fr = r.f / n; r.pct = r.fr * 100; r.col = PAL[i % PAL.length]; });
+    return { rows: rows, n: n, invalid: invalid, appear: order.map(function (k) { return groups[k]; }) };
+  }
+
+  /* ---------- Dibujo de gráficos ---------- */
+  function pt(cx, cy, r, deg) { var a = (deg - 90) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }
+  function sliceEl(cx, cy, r, a0, a1, fill) {
+    if (a1 - a0 >= 359.999) return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="' + fill + '" stroke="var(--card)" stroke-width="2"/>';
+    var p0 = pt(cx, cy, r, a0), p1 = pt(cx, cy, r, a1), large = (a1 - a0) > 180 ? 1 : 0;
+    return '<path d="M' + cx + ' ' + cy + ' L' + p0[0].toFixed(2) + ' ' + p0[1].toFixed(2) + ' A' + r + ' ' + r + ' 0 ' + large + ' 1 ' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2) + ' Z" fill="' + fill + '" stroke="var(--card)" stroke-width="2" stroke-linejoin="round"/>';
+  }
+  function pieSVG(rows, size) {
+    var cx = size / 2, cy = size / 2, r = size / 2 - 6, a = 0, shapes = "", labels = "";
+    rows.forEach(function (row) {
+      var ang = row.fr * 360;
+      shapes += sliceEl(cx, cy, r, a, a + ang, row.col.c);
+      if (row.pct >= 5) {
+        var lr = rows.length === 1 ? 0 : r * 0.64, p = pt(cx, cy, lr, a + ang / 2);
+        labels += '<text x="' + p[0].toFixed(1) + '" y="' + p[1].toFixed(1) + '" text-anchor="middle" dominant-baseline="central" font-family="Lexend, sans-serif" font-weight="600" font-size="' + (row.pct >= 12 ? 15 : 12) + '" fill="' + row.col.ink + '">' + fmtPct(row.pct) + '</text>';
+      }
+      a += ang;
+    });
+    return '<svg viewBox="0 0 ' + size + ' ' + size + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gráfico circular">' + shapes + labels + '</svg>';
+  }
+  function tallySVG(f) {
+    if (f > 60) return '<span class="muted">' + f + ' marcas</span>';
+    function group(k, cross) {
+      var l = "";
+      for (var j = 0; j < k; j++) l += '<line x1="' + (3 + j * 5) + '" y1="2" x2="' + (3 + j * 5) + '" y2="16"/>';
+      if (cross) l += '<line x1="0" y1="14" x2="21" y2="4"/>';
+      return '<svg class="tally" viewBox="0 0 22 18" width="22" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">' + l + '</svg>';
+    }
+    var out = "", full = Math.floor(f / 5), rest = f % 5;
+    for (var i = 0; i < full; i++) out += group(4, true);
+    if (rest) out += group(rest, false);
+    return out;
+  }
+
+  /* ---------- Teoría: ejemplo, anatomía y referencias ---------- */
+  var EJ = [{ label: "Plátano", f: 10 }, { label: "Manzana", f: 5 }, { label: "Frutilla", f: 3 }, { label: "Uva", f: 2 }];
+  function renderTeoria() {
+    var raw = ["Plátano", "Manzana", "Plátano", "Frutilla", "Uva", "Plátano", "Manzana", "Plátano", "Plátano", "Frutilla", "Manzana", "Plátano", "Uva", "Plátano", "Manzana", "Frutilla", "Plátano", "Plátano", "Manzana", "Plátano"];
+    $("#raw-ejemplo").innerHTML = raw.map(function (r) { return "<span>" + r + "</span>"; }).join("");
+    $("#tabla-ejemplo").innerHTML = EJ.map(function (r, i) {
+      var g = gcd(r.f, 20), fr = r.f / 20;
+      return "<tr><td><span class=\"sw\" style=\"background:" + PAL[i].c + "\"></span>" + r.label + "</td><td class=\"tallies\" data-label=\"Conteo\" aria-label=\"" + r.f + " marcas\">" + tallySVG(r.f) + "</td><td class=\"c\" data-label=\"Frec. absoluta (f)\">" + r.f + "</td><td class=\"frac\" data-label=\"Frec. relativa (fr)\">" + r.f + "/20" + (g > 1 ? " = " + (r.f / g) + "/" + (20 / g) : "") + " <span class=\"eq\">= " + nf(fr, 0, 2) + "</span></td><td class=\"c\" data-label=\"Frec. rel. porcentual\">" + fmtPct(fr * 100) + "</td></tr>";
+    }).join("");
+
+    drawAnatomy();
+    try {
+      var mq = window.matchMedia("(max-width: 560px)");
+      if (mq.addEventListener) mq.addEventListener("change", drawAnatomy); else mq.addListener(drawAnatomy);
+    } catch (e) { }
+
+    var bench = [
+      { p: 100, t: "Totalidad", d: "Todo el círculo" },
+      { p: 50, t: "50 %", d: "La mitad del círculo" },
+      { p: 25, t: "25 %", d: "Un cuarto: forma un ángulo recto (90°)" }
+    ];
+    $("#bench").innerHTML = bench.map(function (b) {
+      var body = '<circle cx="50" cy="50" r="44" fill="var(--accent-soft)" stroke="var(--line)" stroke-width="2"/>' + sliceEl(50, 50, 44, 0, b.p * 3.6, "var(--accent)");
+      return '<figure><svg viewBox="0 0 100 100" aria-hidden="true">' + body + '</svg><figcaption><b>' + b.t + '</b>' + b.d + '</figcaption></figure>';
+    }).join("");
+  }
+
+  // Diagrama de las partes del gráfico circular: horizontal en pantallas anchas, vertical en celulares
+  function drawAnatomy() {
+    var narrow = false;
+    try { narrow = window.matchMedia("(max-width: 560px)").matches; } catch (e) { }
+    var hand = 'font-family="Patrick Hand, cursive" font-size="22" fill="var(--pen)"';
+    var line = 'stroke="var(--pen)" stroke-width="2" stroke-linecap="round" fill="none"';
+    var L = narrow ? {
+      w: 380, h: 512, cx: 190, cy: 212, r: 110, ty: 36,
+      legPos: function (i) { return [62 + (i % 2) * 150, 434 + Math.floor(i / 2) * 40]; },
+      box: [36, 404, 308, 92],
+      ann: '<text x="12" y="80" ' + hand + '>título</text><path d="M40 62 Q 54 42 84 36" ' + line + '/>' +
+        '<text x="40" y="394" ' + hand + '>leyenda</text>' +
+        '<text x="8" y="346" ' + hand + '>sector</text><path d="M40 326 Q 84 302 128 272" ' + line + '/>' +
+        '<text x="270" y="346" ' + hand + '>porcentaje</text><path d="M302 326 Q 292 272 266 226" ' + line + '/>'
+    } : {
+      w: 560, h: 370, cx: 190, cy: 205, r: 120, ty: 40,
+      legPos: function (i) { return [378, 160 + i * 30]; },
+      box: [364, 132, 176, 146],
+      ann: '<text x="420" y="45" ' + hand + '>título</text><path d="M414 38 Q 360 30 316 34" ' + line + '/>' +
+        '<text x="364" y="120" ' + hand + '>leyenda</text>' +
+        '<text x="18" y="362" ' + hand + '>sector</text><path d="M58 344 Q 90 320 118 288" ' + line + '/>' +
+        '<text x="350" y="345" ' + hand + '>porcentaje</text><path d="M362 326 Q 320 270 282 222" ' + line + '/>'
+    };
+    var cx = L.cx, cy = L.cy, r = L.r, a = 0, s = "", lab = "", leg = "";
+    [50, 25, 15, 10].forEach(function (p, i) {
+      var ang = p * 3.6;
+      s += sliceEl(cx, cy, r, a, a + ang, PAL[i].c);
+      var q = pt(cx, cy, r * (i === 1 ? 0.7 : 0.62), a + ang / 2);
+      lab += '<text x="' + q[0].toFixed(1) + '" y="' + q[1].toFixed(1) + '" text-anchor="middle" dominant-baseline="central" font-family="Lexend, sans-serif" font-weight="600" font-size="16" fill="' + PAL[i].ink + '">' + p + ' %</text>';
+      a += ang;
+    });
+    EJ.forEach(function (e, i) {
+      var p = L.legPos(i);
+      leg += '<rect x="' + p[0] + '" y="' + (p[1] - 9) + '" width="18" height="18" rx="4" fill="' + PAL[i].c + '"/><text x="' + (p[0] + 28) + '" y="' + p[1] + '" dominant-baseline="central" font-family="Lexend, sans-serif" font-size="16" fill="var(--ink)">' + e.label + '</text>';
+    });
+    $("#anatomia").innerHTML = '<svg viewBox="0 0 ' + L.w + ' ' + L.h + '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<text x="' + cx + '" y="' + L.ty + '" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="21" fill="var(--ink)">Fruta favorita del 6° B</text>' +
+      s + lab +
+      '<polyline points="' + cx + ',' + (cy + 16) + ' ' + (cx - 16) + ',' + (cy + 16) + ' ' + (cx - 16) + ',' + cy + '" fill="none" stroke="#FFFFFF" stroke-width="2"/>' +
+      '<text x="' + (cx - 34) + '" y="' + (cy + 32) + '" font-family="Patrick Hand, cursive" font-size="16" fill="#FFFFFF">90°</text>' +
+      '<rect x="' + L.box[0] + '" y="' + L.box[1] + '" width="' + L.box[2] + '" height="' + L.box[3] + '" rx="10" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/>' + leg +
+      L.ann + '</svg>';
+  }
+
+  /* ---------- Guardado ---------- */
+  function save() { try { localStorage.setItem(STORE, JSON.stringify({ surveys: state.surveys, sel: state.sel })); } catch (e) { } }
+  function load() {
+    try {
+      var r = JSON.parse(localStorage.getItem(STORE) || "null");
+      if (r && Array.isArray(r.surveys) && r.surveys.length) { state.surveys = r.surveys; state.sel = r.sel; return true; }
+    } catch (e) { }
+    return false;
+  }
+  function seed() {
+    state.surveys = [
+      { id: uid(), titulo: "¿Cuál es tu fruta favorita?", grupo: "Estudiantes del 6° B (ejemplo)", tipo: "cualitativa", ejemplo: true,
+        datos: expand([["Plátano", 9], ["Manzana", 6], ["Frutilla", 8], ["Sandía", 4], ["Uva", 3]]) },
+      { id: uid(), titulo: "¿Cuántos hermanos tienes?", grupo: "Estudiantes del 6° A (ejemplo)", tipo: "cuantitativa", ejemplo: true,
+        datos: expand([[0, 5], [1, 11], [2, 7], [3, 3], [4, 2]]) },
+      { id: uid(), titulo: "¿Cómo llegas al colegio?", grupo: "Estudiantes del 6° C (ejemplo)", tipo: "cualitativa", ejemplo: true,
+        datos: expand([["Caminando", 10], ["Micro", 8], ["Auto", 6], ["Furgón escolar", 6], ["Bicicleta", 2]]) }
+    ];
+    state.sel = state.surveys[0].id;
+  }
+  function cur() { for (var i = 0; i < state.surveys.length; i++) if (state.surveys[i].id === state.sel) return state.surveys[i]; return null; }
+
+  /* ---------- Generación ---------- */
+  function generar(tipo) {
+    var bank = BANK[tipo], t = bank[randInt(0, bank.length - 1)], n = randInt(20, 36), datos;
+    if (tipo === "cualitativa") {
+      var ops = shuffle(t.ops.slice()).slice(0, Math.min(t.ops.length, randInt(4, 6)));
+      datos = sampleW(ops, ops.map(function () { return 0.6 + Math.random() * 3.4; }), n);
+    } else {
+      var vals = []; for (var v = t.min; v <= t.max; v++) vals.push(v);
+      var sd = Math.max(1, (t.max - t.min) / 3);
+      datos = sampleW(vals, vals.map(function (x) { return Math.exp(-Math.pow(x - t.center, 2) / (2 * sd * sd)) * (0.6 + Math.random() * 0.8); }), n);
+    }
+    var s = { id: uid(), titulo: t.q, grupo: "Estudiantes del " + CURSOS[randInt(0, CURSOS.length - 1)], tipo: tipo, datos: datos, ejemplo: false };
+    state.surveys.unshift(s); state.sel = s.id; save(); renderAll();
+    flash("Encuesta creada con " + n + " datos.");
+    $("#editor").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function blank() {
+    var s = { id: uid(), titulo: "", grupo: "", tipo: "cualitativa", datos: [], ejemplo: false };
+    state.surveys.unshift(s); state.sel = s.id; save(); renderAll();
+    $("#editor").scrollIntoView({ behavior: "smooth", block: "start" });
+    $("#q-titulo").focus({ preventScroll: true });
+  }
+
+  /* ---------- Render ---------- */
+  function renderList() {
+    $("#lista").innerHTML = state.surveys.length ? state.surveys.map(function (s) {
+      return '<li><button class="item' + (s.id === state.sel ? " on" : "") + '" type="button" data-id="' + s.id + '"' + (s.id === state.sel ? ' aria-current="true"' : "") + '>' +
+        '<span class="item-q">' + esc(s.titulo || "Encuesta sin título") + '</span>' +
+        '<span class="item-meta"><span class="tag ' + s.tipo + '">' + (s.tipo === "cualitativa" ? "Cualitativa" : "Cuantitativa") + '</span>' + s.datos.length + ' datos' + (s.ejemplo ? " · ejemplo" : "") + '</span></button></li>';
+    }).join("") : '<li class="empty">No hay encuestas. Crea una con los botones de arriba.</li>';
+  }
+  function renderEditor() {
+    var s = cur();
+    $("#panel").hidden = !s; $("#vacio").hidden = !!s;
+    if (!s) return;
+    $("#q-titulo").value = s.titulo;
+    $("#q-grupo").value = s.grupo;
+    $("#tipo-cuali").checked = s.tipo === "cualitativa";
+    $("#tipo-cuanti").checked = s.tipo === "cuantitativa";
+    $("#q-datos").value = s.datos.join(", ");
+    $("#q-nuevo").placeholder = s.tipo === "cuantitativa" ? "Escribe un número y presiona Agregar" : "Escribe una respuesta y presiona Agregar";
+    $("#confirm-box").hidden = true;
+    renderChips(); renderResults();
+  }
+  function renderChips() {
+    var s = cur(); if (!s) return;
+    var T = calc(s), list = s.tipo === "cuantitativa" ? T.rows : T.appear;
+    $("#chips").innerHTML = list.map(function (r) {
+      return '<span class="chip"><button type="button" class="chip-add" data-v="' + esc(r.raw) + '">+1 ' + esc(r.label) + ' <span class="muted num">(' + r.f + ')</span></button><button type="button" class="chip-del" data-k="' + esc(r.key) + '" aria-label="Quitar una respuesta ' + esc(r.label) + '">−</button></span>';
+    }).join("");
+  }
+  function ansCell(html) {
+    return state.practica ? '<button type="button" class="reveal" aria-label="Mostrar resultado"><span class="ans">' + html + '</span></button>' : html;
+  }
+  function renderResults() {
+    var s = cur(); if (!s) return;
+    var T = calc(s);
+    $("#res-titulo").textContent = s.titulo || "Encuesta sin título";
+    $("#res-sub").textContent = (s.grupo ? s.grupo + " · " : "") + "Variable " + s.tipo;
+    var err = $("#q-error");
+    if (T.invalid.length) {
+      err.hidden = false;
+      err.textContent = "Estos datos no son números y no se contaron: " + T.invalid.slice(0, 6).join(", ") + (T.invalid.length > 6 ? "…" : "") + ". En una variable cuantitativa todas las respuestas deben ser números. Corrígelos o cambia el tipo a cualitativa.";
+    } else err.hidden = true;
+
+    $("#res-vacio").hidden = T.n > 0;
+    $("#res-body").hidden = T.n === 0;
+    if (!T.n) return;
+
+    // Estadísticos
+    var maxF = Math.max.apply(null, T.rows.map(function (r) { return r.f; }));
+    var modas = T.rows.filter(function (r) { return r.f === maxF; });
+    var modaTxt = (modas.length === T.rows.length && T.rows.length > 1) ? "No hay" : modas.map(function (m) { return m.label; }).join(" y ");
+    var st = '<div class="stat"><span>Total de datos (n)</span><b>' + T.n + '</b></div>' +
+      '<div class="stat"><span>Categorías</span><b>' + T.rows.length + '</b></div>' +
+      '<div class="stat"><span>Moda</span><b>' + esc(modaTxt) + '</b></div>';
+    var prom = null;
+    if (s.tipo === "cuantitativa") {
+      prom = T.rows.reduce(function (a, r) { return a + r.num * r.f; }, 0) / T.n;
+      st += '<div class="stat"><span>Promedio</span><b>' + nf(prom, 0, 1) + '</b></div>';
+    }
+    $("#stats").innerHTML = st;
+
+    // Tabla
+    var redondeo = false;
+    var body = T.rows.map(function (r) {
+      var g = gcd(r.f, T.n);
+      var dec = isExact(r.fr, 2) ? "= " + nf(r.fr, 0, 2) : "≈ " + nf(r.fr, 2, 2);
+      var pct = isExact(r.pct, 1) ? fmtPct(r.pct) : "≈ " + fmtPct(r.pct);
+      if (!isExact(r.pct, 1)) redondeo = true;
+      var frac = r.f + "/" + T.n + (g > 1 ? " = " + (r.f / g) + "/" + (T.n / g) : "") + ' <span class="eq">' + dec + '</span>';
+      return '<tr><td><span class="sw" style="background:' + r.col.c + '"></span>' + esc(r.label) + '</td>' +
+        '<td class="tallies" data-label="Conteo" aria-label="' + r.f + ' marcas">' + tallySVG(r.f) + '</td>' +
+        '<td class="c" data-label="Frec. absoluta (f)">' + ansCell(String(r.f)) + '</td>' +
+        '<td class="frac" data-label="Frec. relativa (fr)">' + ansCell(frac) + '</td>' +
+        '<td class="c" data-label="Frec. rel. porcentual">' + ansCell(pct) + '</td></tr>';
+    }).join("");
+    $("#tabla").innerHTML = '<caption class="sr-only">Tabla de frecuencias: ' + esc(s.titulo || "encuesta") + '</caption>' +
+      '<thead><tr><th>Dato</th><th>Conteo</th><th class="c">Frecuencia absoluta<small>f</small></th><th>Frecuencia relativa<small>fr = f ÷ n</small></th><th class="c">Frec. relativa porcentual<small>%</small></th></tr></thead>' +
+      '<tbody>' + body + '</tbody>' +
+      '<tfoot><tr><td>Total</td><td></td><td class="c" data-label="Frec. absoluta (f)">' + ansCell("n = " + T.n) + '</td><td data-label="Frec. relativa (fr)">' + ansCell("1") + '</td><td class="c" data-label="Frec. rel. porcentual">' + ansCell("100 %") + '</td></tr></tfoot>';
+    $("#nota-redondeo").hidden = !redondeo;
+
+    // Gráfico
+    $("#pie-title").textContent = s.titulo || "Encuesta sin título";
+    $("#pie").innerHTML = pieSVG(T.rows, 300);
+    $("#legend").innerHTML = T.rows.map(function (r) {
+      return '<li><span class="sw" style="background:' + r.col.c + '"></span><span>' + esc(r.label) + '</span><span class="num muted">' + r.f + ' · ' + fmtPct(r.pct) + '</span></li>';
+    }).join("");
+
+    // Conclusiones
+    var c = [];
+    function bench(p) {
+      if (p > 52) return "más de la mitad del círculo";
+      if (p >= 48) return "aproximadamente la mitad del círculo (50 %)";
+      if (p > 27) return "entre un cuarto y la mitad del círculo";
+      if (p >= 23) return "aproximadamente un cuarto del círculo (25 %)";
+      return "menos de un cuarto del círculo";
+    }
+    var top = T.rows.slice().sort(function (a, b) { return b.f - a.f; });
+    if (T.rows.length === 1) {
+      c.push("Todas las respuestas fueron «" + esc(top[0].label) + "»: el sector ocupa el círculo completo (100 %).");
+    } else if (modaTxt === "No hay") {
+      c.push("No hay moda: todas las respuestas se repiten la misma cantidad de veces, así que todos los sectores son del mismo tamaño.");
+    } else {
+      c.push((modas.length > 1 ? "Hay más de una moda: <b>" + esc(modaTxt) + "</b>, con " : "La moda es <b>" + esc(modaTxt) + "</b>: fue la respuesta más repetida, con ") + maxF + " de " + T.n + " respuestas (" + fmtPct(modas[0].pct) + ").");
+      c.push("El sector de «" + esc(top[0].label) + "» ocupa " + bench(top[0].pct) + ".");
+      var second = top[1];
+      if (second && second.f < top[0].f) {
+        var dif = top[0].f - second.f;
+        var extra = (top[0].f === second.f * 2) ? " Es exactamente el doble." : "";
+        c.push("«" + esc(top[0].label) + "» tiene " + dif + " " + (dif === 1 ? "respuesta" : "respuestas") + " más que «" + esc(second.label) + "»." + extra);
+      }
+      var low = top[top.length - 1], lows = top.filter(function (r) { return r.f === low.f; });
+      if (low.f < maxF) c.push((lows.length > 1 ? "Las respuestas menos elegidas fueron " + lows.map(function (r) { return "«" + esc(r.label) + "»"; }).join(", ") : "La respuesta menos elegida fue «" + esc(low.label) + "»") + " (" + fmtPct(low.pct) + ").");
+      var q = T.rows.filter(function (r) { return r.pct >= 23 && r.pct <= 27 && r !== top[0]; });
+      q.forEach(function (r) { c.push("«" + esc(r.label) + "» representa cerca de un cuarto del total: su sector forma casi un ángulo recto."); });
+    }
+    if (prom !== null) c.push("En promedio, la respuesta fue " + nf(prom, 0, 1) + ".");
+    $("#concl").innerHTML = c.map(function (x) { return "<li>" + x + "</li>"; }).join("");
+  }
+  function renderAll() { renderList(); renderEditor(); }
+
+  var flashT;
+  function flash(msg) { var el = $("#status"); el.textContent = msg; clearTimeout(flashT); flashT = setTimeout(function () { el.textContent = ""; }, 2600); }
+  function changed(syncText) {
+    var s = cur(); if (!s) return;
+    if (syncText) $("#q-datos").value = s.datos.join(", ");
+    save(); renderChips(); renderResults(); renderList();
+  }
+
+  /* ---------- Eventos ---------- */
+  $("#gen-cuali").addEventListener("click", function () { generar("cualitativa"); });
+  $("#gen-cuanti").addEventListener("click", function () { generar("cuantitativa"); });
+  $("#gen-blank").addEventListener("click", blank);
+  $("#lista").addEventListener("click", function (e) {
+    var b = e.target.closest(".item"); if (!b) return;
+    state.sel = b.getAttribute("data-id"); save(); renderAll();
+  });
+  $("#q-titulo").addEventListener("input", function (e) { var s = cur(); if (!s) return; s.titulo = e.target.value; save(); renderList(); renderResults(); });
+  $("#q-grupo").addEventListener("input", function (e) { var s = cur(); if (!s) return; s.grupo = e.target.value; save(); renderResults(); });
+  document.querySelectorAll('input[name="tipo"]').forEach(function (r) {
+    r.addEventListener("change", function () { var s = cur(); if (!s) return; s.tipo = r.value; renderEditor(); save(); renderList(); });
+  });
+  $("#q-datos").addEventListener("input", function (e) { var s = cur(); if (!s) return; s.datos = parseDatos(e.target.value); changed(false); });
+  $("#q-datos").addEventListener("blur", function () { var s = cur(); if (s) $("#q-datos").value = s.datos.join(", "); });
+  function addNuevo() {
+    var s = cur(), inp = $("#q-nuevo"); if (!s) return;
+    var vals = parseDatos(inp.value);
+    if (!vals.length) { inp.focus(); return; }
+    s.datos = s.datos.concat(vals); inp.value = ""; changed(true); inp.focus();
+    flash("Respuesta agregada.");
+  }
+  $("#q-agregar").addEventListener("click", addNuevo);
+  $("#q-nuevo").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addNuevo(); } });
+  $("#chips").addEventListener("click", function (e) {
+    var s = cur(); if (!s) return;
+    var add = e.target.closest(".chip-add"), del = e.target.closest(".chip-del");
+    if (add) { s.datos.push(add.getAttribute("data-v")); changed(true); }
+    else if (del) {
+      var k = del.getAttribute("data-k");
+      for (var i = s.datos.length - 1; i >= 0; i--) { var kk = keyOf(s, s.datos[i]); if (kk && kk.key === k) { s.datos.splice(i, 1); break; } }
+      changed(true);
+    }
+  });
+  $("#q-borrar").addEventListener("click", function () { $("#confirm-box").hidden = false; $("#q-borrar-no").focus(); });
+  $("#q-borrar-no").addEventListener("click", function () { $("#confirm-box").hidden = true; });
+  $("#q-borrar-si").addEventListener("click", function () {
+    state.surveys = state.surveys.filter(function (s) { return s.id !== state.sel; });
+    state.sel = state.surveys.length ? state.surveys[0].id : null;
+    save(); renderAll();
+  });
+  $("#practica").addEventListener("change", function (e) { state.practica = e.target.checked; renderResults(); });
+  $("#tabla").addEventListener("click", function (e) { var b = e.target.closest(".reveal"); if (b) { b.classList.add("shown"); b.removeAttribute("aria-label"); } });
+  $("#copiar").addEventListener("click", function () {
+    var s = cur(); if (!s) return;
+    var T = calc(s);
+    var lines = [s.titulo || "Encuesta", "Dato\tFrecuencia absoluta (f)\tFrecuencia relativa (fr)\tFrecuencia relativa porcentual (%)"];
+    T.rows.forEach(function (r) { lines.push(r.label + "\t" + r.f + "\t" + nf(r.fr, 0, 4) + "\t" + nf(r.pct, 0, 1) + " %"); });
+    lines.push("Total\t" + T.n + "\t1\t100 %");
+    var text = lines.join("\n");
+    function fallback() {
+      var ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      var ok = false; try { ok = document.execCommand("copy"); } catch (err) { }
+      document.body.removeChild(ta);
+      flash(ok ? "Tabla copiada. Pégala en Excel o Word." : "No se pudo copiar. Selecciona la tabla con el mouse y cópiala.");
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { flash("Tabla copiada. Pégala en Excel o Word."); }, fallback);
+    } catch (err) { fallback(); }
+  });
+
+  /* ---------- Inicio ---------- */
+  renderTeoria();
+  if (!load()) { seed(); save(); }
+  if (!cur() && state.surveys.length) state.sel = state.surveys[0].id;
+  renderAll();
+})();
+</script>
+
+</body>
+</html>
